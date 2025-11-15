@@ -1,30 +1,23 @@
 services:
-  # Сервис нашего бота
   bot:
-    # Инструкция по сборке находится в текущей директории (используя наш Dockerfile)
     build: .
-    # Подключаем файл с переменными окружения
-    env_file:
-      - .env
-    # Указываем, что наш бот должен запускаться только ПОСЛЕ того, как запустится сервис с базой данных
+    user: "${UID}:${GID}"
+    env_file: .env
+    environment:
+      - POETRY_VIRTUALENVS_IN_PROJECT=true
+    volumes:
+      - .:/app
     depends_on:
       - postgres
+    restart: on-failure
 
-  # Сервис базы данных PostgreSQL
   postgres:
-    # Используем официальный легковесный образ PostgreSQL
     image: postgres:15-alpine
-    # Подключаем тот же файл с переменными окружения.
-    # Образ postgres автоматически использует переменные POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
-    env_file:
-      - .env
-    # Пробрасываем порты, чтобы можно было подключиться к БД с локальной машины (например, для отладки)
-    # 5433 (наш компьютер) -> 5432 (внутри контейнера)
-    ports:
-      - "5433:5432"
-    # Создаем volume, чтобы данные БД не удалялись при перезапуске контейнера
+    env_file: .env
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
 volumes:
   postgres_data:
