@@ -10,9 +10,11 @@ load_dotenv(dotenv_path=env_path)
 # --- Переменные окружения ---
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-
-# Добавляем переменную для URL базы данных
 DATABASE_URL = os.getenv("DATABASE_URL")
+
+# --- Настройки бизнес-логики ---
+# Максимальный возраст события в годах, которое можно добавить.
+MAX_EVENT_AGE_YEARS = int(os.getenv("MAX_EVENT_AGE_YEARS", 100))
 
 
 # --- Настройка логирования ---
@@ -30,4 +32,3 @@ if not TELEGRAM_BOT_TOKEN:
 if not DATABASE_URL:
     logger.critical("Не удалось загрузить DATABASE_URL! Проверьте .env файл.")
     exit("Database URL not found!")
-
