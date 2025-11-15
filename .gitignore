@@ -106,3 +106,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Poetry
+.poetry/
+.venv/
+
+# Docker
+postgres_data/
