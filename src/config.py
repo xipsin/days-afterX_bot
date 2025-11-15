@@ -4,7 +4,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Загружаем переменные окружения из .env файла
-# Ищем .env файл относительно базовой директории проекта
 env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
@@ -12,18 +11,23 @@ load_dotenv(dotenv_path=env_path)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
+# Добавляем переменную для URL базы данных
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
 # --- Настройка логирования ---
-# Устанавливаем базовую конфигурацию для логирования
 logging.basicConfig(
     level=LOG_LEVEL,
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
 )
-
-# Получаем корневой логгер
 logger = logging.getLogger(__name__)
 
-# Проверка, что токен бота загружен
+# Проверка, что ключевые переменные загружены
 if not TELEGRAM_BOT_TOKEN:
     logger.critical("Не удалось загрузить токен Telegram-бота! Проверьте .env файл.")
     exit("Telegram bot token not found!")
+
+if not DATABASE_URL:
+    logger.critical("Не удалось загрузить DATABASE_URL! Проверьте .env файл.")
+    exit("Database URL not found!")
 

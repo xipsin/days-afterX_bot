@@ -1,17 +1,23 @@
 import asyncio
 from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties # Импортируем
+from aiogram.client.default import DefaultBotProperties
 
 from src.config import logger, TELEGRAM_BOT_TOKEN
 from src.handlers import user_handlers
+from src.db.database import engine # <-- Импортируем наш движок
 
 async def main():
     logger.info("Бот запускается...")
 
-    # Создаем объект с настройками по умолчанию
-    default_properties = DefaultBotProperties(parse_mode="HTML")
+    # Проверка подключения к базе данных
+    try:
+        async with engine.connect() as conn:
+            logger.info("Успешное подключение к базе данных!")
+    except Exception as e:
+        logger.critical(f"Ошибка подключения к базе данных: {e}")
+        return # Завершаем работу, если не можем подключиться к БД
 
-    # Инициализация Bot с новым синтаксисом
+    default_properties = DefaultBotProperties(parse_mode="HTML")
     bot = Bot(token=TELEGRAM_BOT_TOKEN, default=default_properties)
     dp = Dispatcher()
 
@@ -27,3 +33,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
         logger.info("Бот остановлен.")
+
