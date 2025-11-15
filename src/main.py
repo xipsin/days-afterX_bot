@@ -1,32 +1,47 @@
 import asyncio
-from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
+import sys
 
-from src.config import logger, TELEGRAM_BOT_TOKEN
-from src.handlers import user_handlers
-from src.db.database import engine # <-- Импортируем наш движок
+from aiogram import Bot, Dispatcher
+from aiogram.client.bot import DefaultBotProperties
+from aiogram.fsm.storage.memory import MemoryStorage
+from sqlalchemy.ext.asyncio import create_async_engine
+
+from src.config import logger, TELEGRAM_BOT_TOKEN, DATABASE_URL
+from src.db.database import async_session_maker
+from src.handlers import common_handlers, event_handlers
+
 
 async def main():
-    logger.info("Бот запускается...")
+    """Основная функция для запуска бота."""
 
-    # Проверка подключения к базе данных
+    # Настройка и проверка подключения к БД
     try:
+        engine = create_async_engine(DATABASE_URL)
         async with engine.connect() as conn:
             logger.info("Успешное подключение к базе данных!")
     except Exception as e:
-        logger.critical(f"Ошибка подключения к базе данных: {e}")
-        return # Завершаем работу, если не можем подключиться к БД
+        logger.critical(f"Не удалось подключиться к базе данных: {e}")
+        sys.exit("Database connection failed")
 
-    default_properties = DefaultBotProperties(parse_mode="HTML")
-    bot = Bot(token=TELEGRAM_BOT_TOKEN, default=default_properties)
-    dp = Dispatcher()
+    # Инициализация бота и диспетчера
+    bot = Bot(
+        token=TELEGRAM_BOT_TOKEN,
+        default=DefaultBotProperties(parse_mode="Markdown")
+    )
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
 
-    dp.include_router(user_handlers.router)
-    logger.info("Хэндлеры подключены.")
 
-    await bot.delete_webhook(drop_pending_updates=True)
+    # Подключение роутеров
+    dp.include_router(common_handlers.router)
+    dp.include_router(event_handlers.router)
+    logger.info("Все хэндлеры подключены.")
+
+    # Запуск polling
     logger.info("Запуск polling...")
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     try:
