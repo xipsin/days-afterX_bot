@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from src.config import logger, TELEGRAM_BOT_TOKEN, DATABASE_URL
 from src.db.database import async_session_maker
 from src.handlers import common_handlers, event_handlers
+from src.middlewares.db import DbSessionMiddleware
 
 
 async def main():
@@ -26,11 +27,14 @@ async def main():
     # Инициализация бота и диспетчера
     bot = Bot(
         token=TELEGRAM_BOT_TOKEN,
-        default=DefaultBotProperties(parse_mode="Markdown")
+        default=DefaultBotProperties(parse_mode="HTML")
     )
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
 
+    # --- РЕГИСТРАЦИЯ ГЛОБАЛЬНОГО MIDDLEWARE ДЛЯ СЕССИИ БД ---
+    dp.update.middleware(DbSessionMiddleware(session_pool=async_session_maker))
+    logger.info("DbSessionMiddleware зарегистрирован.")
 
     # Подключение роутеров
     dp.include_router(common_handlers.router)
@@ -48,4 +52,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
         logger.info("Бот остановлен.")
-
